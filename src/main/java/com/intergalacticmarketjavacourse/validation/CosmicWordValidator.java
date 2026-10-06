@@ -1,18 +1,10 @@
 package com.intergalacticmarketjavacourse.validation;
 
+import com.intergalacticmarketjavacourse.domain.ProductName;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
 
-import java.util.Set;
-
-public class CosmicWordValidator
-        implements ConstraintValidator<CosmicWordCheck, String> {
-
-    private static final Set<String> COSMIC_TERMS = Set.of(
-            "star",
-            "galaxy",
-            "comet"
-    );
+public class CosmicWordValidator implements ConstraintValidator<CosmicWordCheck, String> {
 
     @Override
     public boolean isValid(String value, ConstraintValidatorContext context) {
@@ -20,9 +12,6 @@ public class CosmicWordValidator
             return true;
         }
 
-        String normalizedValue = value.toLowerCase();
-
-        return COSMIC_TERMS.stream()
-                .anyMatch(normalizedValue::contains);
+        return ProductName.containsCosmicTerm(value);
     }
 }

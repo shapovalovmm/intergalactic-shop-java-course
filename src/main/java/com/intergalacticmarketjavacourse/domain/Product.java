@@ -5,7 +5,7 @@ import java.util.Objects;
 
 public class Product {
     private Long id;
-    private String name;
+    private ProductName name;
     private BigDecimal cost;
     private String description;
     private Long categoryId;
@@ -15,12 +15,11 @@ public class Product {
     }
 
     public Product(String name, BigDecimal cost, String description, Long categoryId) {
-        validateName(name);
         validateCost(cost);
         validateDescription(description);
         this.categoryId = Objects.requireNonNull(categoryId, "Category ID must not be null");
 
-        this.name = name;
+        this.name = new ProductName(name);
         this.cost = cost;
         this.description = description;
     }
@@ -28,8 +27,7 @@ public class Product {
     // Бізнес-методи для мутації стану сутності (відповідають PATCH операціям у контракті)
 
     public void updateName(String newName) {
-        validateName(newName);
-        this.name = newName;
+        this.name = new ProductName(newName);
     }
 
     public void updateCost(BigDecimal newCost) {
@@ -43,15 +41,6 @@ public class Product {
     }
 
     // Доменна валідація інваріантів
-
-    private void validateName(String name) {
-        if (name == null || name.isBlank()) {
-            throw new IllegalArgumentException("Product name must not be blank");
-        }
-        if (name.length() > 69) {
-            throw new IllegalArgumentException("Product name must not exceed 69 characters");
-        }
-    }
 
     private void validateCost(BigDecimal cost) {
         if (cost == null) {
@@ -75,7 +64,7 @@ public class Product {
     }
 
     public String getName() {
-        return name;
+        return name.value();
     }
 
     public BigDecimal getCost() {
