@@ -1,0 +1,464 @@
+openapi: 3.0.0
+info:
+  title: Products API
+  version: 1.0.0
+  description: CRUD operations for Product management with embedded request/response examples, RFC 9457 Problem Details, and pagination envelope.
+
+paths:
+  /api/products:
+    get:
+      summary: Отримання пагінованого списку продуктів
+      operationId: getProducts
+      parameters:
+        - name: page
+          in: query
+          required: false
+          description: Номер сторінки (0-indexed, невід'ємне число)
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+          example: 0
+        - name: size
+          in: query
+          required: false
+          description: Кількість елементів на сторінці (від 1 до 100)
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          example: 10
+      responses:
+        '200':
+          description: Успішне отримання сторінки з продуктами
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PagedProductResponse'
+              examples:
+                firstPageExample:
+                  summary: Приклад першої сторінки
+                  value:
+                    content:
+                      - id: 1
+                        name: "Гравітаційний нашийник"
+                        cost: 1250.50
+                        description: "Автоматично компенсує перевантаження при польотах у відкритому космосі."
+                        categoryId: 12
+                      - id: 2
+                        name: "Лазерна указка дальньої дії"
+                        cost: 320.00
+                        description: "Світить на відстань до трьох астрономічних одиниць."
+                        categoryId: 8
+                    page: 0
+                    size: 10
+                    totalElements: 42
+                    totalPages: 5
+        '400':
+          $ref: '#/components/responses/ValidationError'
+
+    post:
+      summary: Створення нового продукту
+      operationId: createProduct
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductCreateRequest'
+            examples:
+              validProduct:
+                summary: Валідні дані для створення продукту
+                value:
+                  name: "Гравітаційний нашийник"
+                  cost: 1250.50
+                  description: "Автоматично компенсує перевантаження при польотах у відкритому космосі."
+                  categoryId: 12
+              invalidCostAndName:
+                summary: Невалідний запит (задовга назва та від'ємна ціна)
+                value:
+                  name: "Надзвичайно довга назва космічного товару, яка точно перевищує допустимий ліміт сімдесят символів"
+                  cost: -45.00
+                  description: "Базовий опис"
+                  categoryId: 12
+      responses:
+        '201':
+          description: Продукт успішно створено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductResponse'
+              examples:
+                createdProduct:
+                  summary: Успішно створений продукт
+                  value:
+                    id: 1
+                    name: "Гравітаційний нашийник"
+                    cost: 1250.50
+                    description: "Автоматично компенсує перевантаження при польотах у відкритому космосі."
+                    categoryId: 12
+        '400':
+          $ref: '#/components/responses/ValidationError'
+
+  /api/products/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        description: Унікальний ідентифікатор продукту (PK)
+        schema:
+          type: integer
+          format: int64
+        example: 1
+
+    get:
+      summary: Отримання інформації про продукт
+      operationId: getProductById
+      responses:
+        '200':
+          description: Успішне отримання даних продукту
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductResponse'
+              examples:
+                existingProduct:
+                  summary: Знайдений продукт
+                  value:
+                    id: 1
+                    name: "Гравітаційний нашийник"
+                    cost: 1250.50
+                    description: "Автоматично компенсує перевантаження при польотах у відкритому космосі."
+                    categoryId: 12
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+    delete:
+      summary: Видалення продукту
+      operationId: deleteProduct
+      responses:
+        '204':
+          description: Продукт успішно видалено
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+  /api/products/{id}/name:
+    patch:
+      summary: Зміна назви продукту
+      operationId: updateProductName
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+          example: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateNameRequest'
+            examples:
+              validNameUpdate:
+                summary: Валідна нова назва
+                value:
+                  name: "Гравітаційний нашийник v2"
+      responses:
+        '200':
+          description: Назву успішно оновлено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+  /api/products/{id}/cost:
+    patch:
+      summary: Зміна ціни продукту
+      operationId: updateProductCost
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+          example: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateCostRequest'
+            examples:
+              validCostUpdate:
+                summary: Валідна нова ціна
+                value:
+                  cost: 1100.00
+      responses:
+        '200':
+          description: Ціну успішно оновлено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+  /api/products/{id}/description:
+    patch:
+      summary: Зміна опису продукту
+      operationId: updateProductDescription
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+          example: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateDescriptionRequest'
+            examples:
+              validDescriptionUpdate:
+                summary: Валідний новий опис
+                value:
+                  description: "Оновлена версія з антирадіаційним покриттям."
+      responses:
+        '200':
+          description: Опис успішно оновлено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+components:
+  responses:
+    ValidationError:
+      description: Помилка валідації запиту за стандартом RFC 9457
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ValidationProblemDetails'
+          examples:
+            singleFieldError:
+              summary: Порушення обмеження на поле cost
+              value:
+                type: "https://cosmo-cats.market/errors/validation"
+                title: "Validation failed"
+                status: 400
+                detail: "Field 'cost' must be greater than or equal to 0."
+                instance: "/api/products/1/cost"
+            paginationError:
+              summary: Невалідне значення параметрів пагінації
+              value:
+                type: "https://cosmo-cats.market/errors/validation"
+                title: "Validation failed"
+                status: 400
+                detail: "Page index must not be less than zero."
+                instance: "/api/products"
+
+    NotFoundError:
+      description: Ресурс не знайдено (RFC 9457)
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          examples:
+            productNotFound:
+              summary: Продукт не знайдено
+              value:
+                type: "https://cosmo-cats.market/errors/not-found"
+                title: "Resource Not Found"
+                status: 404
+                detail: "Product with ID 999 does not exist."
+                instance: "/api/products/999"
+
+  schemas:
+    PagedProductResponse:
+      type: object
+      required:
+        - content
+        - page
+        - size
+        - totalElements
+        - totalPages
+      properties:
+        content:
+          type: array
+          description: Список продуктів на поточній сторінці
+          items:
+            $ref: '#/components/schemas/ProductResponse'
+        page:
+          type: integer
+          description: Номер поточної сторінки (0-indexed)
+          example: 0
+        size:
+          type: integer
+          description: Розмір поточної сторінки
+          example: 10
+        totalElements:
+          type: integer
+          format: int64
+          description: Загальна кількість записів у вибірці
+          example: 42
+        totalPages:
+          type: integer
+          description: Загальна кількість доступних сторінок
+          example: 5
+
+    ProductResponse:
+      type: object
+      required:
+        - id
+        - name
+        - cost
+        - categoryId
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 1
+        name:
+          type: string
+          maxLength: 69
+          example: "Гравітаційний нашийник"
+        cost:
+          type: number
+          format: double
+          minimum: 0.0
+          example: 1250.50
+        description:
+          type: string
+          nullable: true
+          maxLength: 500
+          example: "Автоматично компенсує перевантаження при польотах у відкритому космосі."
+        categoryId:
+          type: integer
+          format: int64
+          example: 12
+
+    ProductCreateRequest:
+      type: object
+      required:
+        - name
+        - cost
+        - categoryId
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 69
+          description: "Назва продукту (not null, строго менше 70 символів)"
+          example: "Гравітаційний нашийник"
+        cost:
+          type: number
+          format: double
+          minimum: 0.0
+          description: "Вартість продукту (not null, >= 0)"
+          example: 1250.50
+        description:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: "Опис продукту (до 500 символів включно)"
+          example: "Автоматично компенсує перевантаження при польотах у відкритому космосі."
+        categoryId:
+          type: integer
+          format: int64
+          description: "ID категорії (not null)"
+          example: 12
+
+    UpdateNameRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 69
+          example: "Гравітаційний нашийник v2"
+
+    UpdateCostRequest:
+      type: object
+      required:
+        - cost
+      properties:
+        cost:
+          type: number
+          format: double
+          minimum: 0.0
+          example: 1100.00
+
+    UpdateDescriptionRequest:
+      type: object
+      required:
+        - description
+      properties:
+        description:
+          type: string
+          nullable: true
+          maxLength: 500
+          example: "Оновлена версія з антирадіаційним покриттям."
+
+    ProblemDetails:
+      type: object
+      required:
+        - type
+        - title
+        - status
+      properties:
+        type:
+          type: string
+          format: uri
+          example: "https://cosmo-cats.market/errors/not-found"
+        title:
+          type: string
+          example: "Resource Not Found"
+        status:
+          type: integer
+          example: 404
+        detail:
+          type: string
+          example: "Product with ID 999 does not exist."
+        instance:
+          type: string
+          format: uri-reference
+          example: "/api/products/999"
+
+    ValidationProblemDetails:
+      allOf:
+        - $ref: '#/components/schemas/ProblemDetails'
+        - type: object
+          properties:
+            invalid-params:
+              type: array
+              items:
+                type: object
+                required:
+                  - name
+                  - reason
+                properties:
+                  name:
+                    type: string
+                    example: "cost"
+                  reason:
+                    type: string
+                    example: "Field 'cost' must be greater than or equal to 0."
